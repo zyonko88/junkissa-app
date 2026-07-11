@@ -479,6 +479,14 @@
     return "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(address);
   }
 
+  function speakText(text){
+    if(!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    var utter = new SpeechSynthesisUtterance(text);
+    utter.lang = "ja-JP";
+    window.speechSynthesis.speak(utter);
+  }
+
   // ---------- 昭和歌謡風オリジナルBGM (Web Audio API, 実在の楽曲は使用しない) ----------
   var NOTE_FREQ = {
     A3:220.00, C4:261.63, D4:293.66, F4:349.23,
@@ -895,6 +903,7 @@
         Array.prototype.forEach.call(document.querySelectorAll("#moodRow .chip"), function(b){ b.classList.remove("selected"); });
         btn.classList.add("selected");
         selectedMood = MOODS[parseInt(btn.getAttribute("data-i"),10)];
+        speakText(selectedMood.label);
       };
     });
 
