@@ -943,6 +943,7 @@
     Array.prototype.forEach.call(document.querySelectorAll(".shop-card"), function(el){
       el.onclick = function(){
         playDoorChime();
+        speakText("いらっしゃいませ");
         location.hash = "#/shop/"+el.getAttribute("data-id");
       };
     });
