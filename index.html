@@ -252,6 +252,7 @@
     border-radius:50%;
     display:flex;align-items:center;justify-content:center;
     font-size:1.5rem;
+    object-fit:cover;
   }
   .shop-card-info{flex:1; text-align:left;}
   .shop-card-info .name{font-size:1.05rem; color:var(--brown-dark); font-weight:bold;}
@@ -814,8 +815,11 @@
       shops.forEach(function(s){
         var visitCount = s.visits.length;
         var last = visitCount ? s.visits.slice().sort(function(a,b){return a.date<b.date?1:-1;})[0].date : null;
+        var thumb = (s.photos && s.photos.length)
+          ? '<img class="shop-icon" src="'+s.photos[0]+'" alt="">'
+          : '<div class="shop-icon">🍮</div>';
         html += '<div class="shop-card" data-id="'+esc(s.id)+'">' +
-          '<div class="shop-icon">🍮</div>' +
+          thumb +
           '<div class="shop-card-info">' +
             '<div class="name">'+esc(s.name)+(s.isSample?'<span class="sample-tag">サンプル</span>':'')+'</div>' +
             '<div class="area">'+esc(s.area||"")+'</div>' +
