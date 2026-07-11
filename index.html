@@ -893,10 +893,17 @@
   }
 
   function renderList(){
+    var featuredOrder = {
+      "コーヒールーム ミニ": 0,
+      "コーヒーサロン皇帝": 1,
+      "サニールートコーヒー": 2
+    };
     var dirOrder = {};
     TAKAMATSU_DIRECTORY.forEach(function(d, i){ dirOrder[d.name] = i; });
     function orderKey(s){
-      return (s.name in dirOrder) ? dirOrder[s.name] : 1000 + (s.createdAt || 0) / 1e13;
+      if(s.name in featuredOrder) return featuredOrder[s.name];
+      if(s.name in dirOrder) return 100 + dirOrder[s.name];
+      return 1000 + (s.createdAt || 0) / 1e13;
     }
     var shops = data.shops.slice().sort(function(a,b){ return orderKey(a) - orderKey(b); });
     var visitedTotal = shops.filter(function(s){ return s.visits.length > 0; }).length;
