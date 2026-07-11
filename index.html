@@ -733,6 +733,26 @@
     vibrato.stop(startTime + dur + 0.05);
   }
 
+  function playDoorChime(){
+    var ctx = ensureAudioCtx();
+    if(ctx.state === "suspended") ctx.resume();
+    var t = ctx.currentTime;
+    [880, 1318.5].forEach(function(freq, i){
+      var osc = ctx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      var gain = ctx.createGain();
+      var start = t + i * 0.07;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.linearRampToValueAtTime(0.22, start + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.4);
+    });
+  }
+
   function scheduleMelodyLoop(){
     if(!musicPlaying) return;
     var ctx = ensureAudioCtx();
@@ -857,7 +877,10 @@
     document.getElementById("addShopFab").onclick = function(){ location.hash = "#/add-shop"; };
     document.getElementById("openDirectoryBtn").onclick = function(){ location.hash = "#/directory"; };
     Array.prototype.forEach.call(document.querySelectorAll(".shop-card"), function(el){
-      el.onclick = function(){ location.hash = "#/shop/"+el.getAttribute("data-id"); };
+      el.onclick = function(){
+        playDoorChime();
+        location.hash = "#/shop/"+el.getAttribute("data-id");
+      };
     });
   }
 
