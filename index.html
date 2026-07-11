@@ -573,7 +573,29 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   }
 
+  function syncDirectoryUpdates(){
+    var changed = false;
+    data.shops.forEach(function(s){
+      var d = TAKAMATSU_DIRECTORY.filter(function(x){ return x.name === s.name; })[0];
+      if(!d) return;
+      if((!s.photos || s.photos.length === 0) && d.photos && d.photos.length){
+        s.photos = d.photos.slice();
+        changed = true;
+      }
+      if(!s.tabelogUrl && d.tabelogUrl){
+        s.tabelogUrl = d.tabelogUrl;
+        changed = true;
+      }
+      if(!s.description && d.description){
+        s.description = d.description;
+        changed = true;
+      }
+    });
+    if(changed) saveData();
+  }
+
   var data = loadData();
+  syncDirectoryUpdates();
 
   function uid(){
     return Date.now().toString(36) + Math.random().toString(36).slice(2,8);
