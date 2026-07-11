@@ -350,6 +350,16 @@
   }
   .shop-manage-row{display:flex; gap:8px; padding:0 16px 8px;}
   .file-input-wrap{margin-top:6px;}
+  .photo-btn-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;}
+  .photo-pick-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    flex:1;
+    min-width:140px;
+    text-align:center;
+    cursor:pointer;
+  }
 </style>
 </head>
 <body>
@@ -434,6 +444,12 @@
       address:"香川県高松市屋島中町216-2",
       description:"屋島の麓、琴電屋島駅から徒歩2分。緑豊かで落ち着いた雰囲気で、テラス席はペット同伴も可能。",
       recommendedMenu:["モーニング","ランチセット","ケーキセット"]
+    },
+    {
+      name:"くつわ堂 総本店",
+      address:"香川県高松市片原町1-2",
+      description:"1967年創業。瓦せんべいの土産店に併設された98席の広々とした喫茶室で、ゆったりしたソファ席がある。",
+      recommendedMenu:["瓦せんべい","ブランチセット","コーヒー"]
     }
   ];
 
@@ -895,7 +911,13 @@
       '<label>思い出・メモ</label>' +
       '<textarea id="vMemo" placeholder="味の感想、店内の雰囲気、話したことなど"></textarea>' +
       '<label>写真（任意）</label>' +
-      '<div class="file-input-wrap"><input type="file" accept="image/*" id="vPhoto"></div>' +
+      '<div class="photo-btn-row">' +
+        '<label class="btn-secondary photo-pick-btn" for="vPhotoCamera">📷 写真を撮る</label>' +
+        '<input type="file" accept="image/*" capture="environment" id="vPhotoCamera" style="display:none;">' +
+        '<label class="btn-secondary photo-pick-btn" for="vPhotoLibrary">🖼 アルバムから選ぶ</label>' +
+        '<input type="file" accept="image/*" id="vPhotoLibrary" style="display:none;">' +
+      '</div>' +
+      '<div id="photoPreviewWrap"></div>' +
       '<div style="margin-top:26px;">' +
         '<button class="btn-primary" id="saveVisitBtn">記録を保存する</button>' +
       '</div>' +
@@ -913,8 +935,25 @@
       };
     });
 
-    document.getElementById("vPhoto").addEventListener("change", function(e){
-      var file = e.target.files[0];
+    function renderPhotoPreview(){
+      var wrap = document.getElementById("photoPreviewWrap");
+      wrap.innerHTML = photoData
+        ? '<div style="position:relative; margin-top:10px;">' +
+            '<img src="'+photoData+'" style="width:100%; border-radius:6px;">' +
+            '<button type="button" class="btn-danger" id="removePhotoBtn" style="position:absolute; top:8px; right:8px;">✕ 削除</button>' +
+          '</div>'
+        : '';
+      if(photoData){
+        document.getElementById("removePhotoBtn").onclick = function(){
+          photoData = null;
+          document.getElementById("vPhotoCamera").value = "";
+          document.getElementById("vPhotoLibrary").value = "";
+          renderPhotoPreview();
+        };
+      }
+    }
+
+    function handlePhotoFile(file){
       if(!file) return;
       var reader = new FileReader();
       reader.onload = function(ev){
@@ -928,10 +967,18 @@
           var ctx = canvas.getContext("2d");
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           photoData = canvas.toDataURL("image/jpeg", 0.7);
+          renderPhotoPreview();
         };
         img.src = ev.target.result;
       };
       reader.readAsDataURL(file);
+    }
+
+    document.getElementById("vPhotoCamera").addEventListener("change", function(e){
+      handlePhotoFile(e.target.files[0]);
+    });
+    document.getElementById("vPhotoLibrary").addEventListener("change", function(e){
+      handlePhotoFile(e.target.files[0]);
     });
 
     document.getElementById("saveVisitBtn").onclick = function(){
