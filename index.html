@@ -368,33 +368,87 @@
     {emoji:"🤔", label:"考えごと日和"}
   ];
 
+  var TAKAMATSU_DIRECTORY = [
+    {
+      name:"珈琲美人 文月",
+      address:"香川県高松市木太町828-1",
+      description:"1991年創業。アンティーク家具に彩られたヨーロピアン空間で、直火焙煎した豆を丁寧に淹れる。",
+      recommendedMenu:["アイスウインナー","ホットサンド","ホットケーキ"]
+    },
+    {
+      name:"レスト&コーヒー ロゼ",
+      address:"香川県高松市木太町1488-3",
+      description:"1979年創業。中庭に創業時からのシンボルツリーが残る。手作りソースの洋食が名物。",
+      recommendedMenu:["スペシャルランチ"]
+    },
+    {
+      name:"南珈琲店",
+      address:"香川県高松市南新町3-4",
+      description:"創業1975年。南新町商店街にある老舗。「豆100%、焙煎100%、点て方100%」がこだわり。",
+      recommendedMenu:[]
+    },
+    {
+      name:"城の眼",
+      address:"香川県高松市紺屋町2-4",
+      description:"1962年創業。1964年ニューヨーク万博の日本館試作として建てられた建物で、イサム・ノグチも訪れた。",
+      recommendedMenu:[]
+    },
+    {
+      name:"コーヒーサロン皇帝",
+      address:"香川県高松市兵庫町11-5",
+      description:"創業1982年。「いい音楽にいいコーヒー」がコンセプトの、昭和レトログッズが並ぶ老舗。",
+      recommendedMenu:["ナポリタン","ブレンドコーヒー"]
+    },
+    {
+      name:"喫茶 クナウフ",
+      address:"香川県高松市兵庫町4-6",
+      description:"店先の1962年製スクーターが目印。古道具好きの店主が集めた懐かしい雰囲気の店内。",
+      recommendedMenu:["ハムチーズトースト","オムレツサンド"]
+    },
+    {
+      name:"八番館 コーヒー店",
+      address:"香川県高松市片原町10-15",
+      description:"1975年創業。世界の豆を目利きしたご夫婦が生豆から自家焙煎する。",
+      recommendedMenu:["モーニングセット"]
+    },
+    {
+      name:"喫茶 ミツヤ",
+      address:"香川県高松市片原町1-29",
+      description:"朝6時から営業する片原町商店街の老舗喫茶。",
+      recommendedMenu:[]
+    },
+    {
+      name:"コーヒールーム ミニ",
+      address:"香川県高松市紺屋町2-1",
+      description:"紺屋町にひっそりと佇む小さな喫茶室。",
+      recommendedMenu:[]
+    },
+    {
+      name:"喫茶 ダイアン",
+      address:"香川県高松市番町1丁目8-11",
+      description:"平日朝7時から営業する番町の純喫茶。",
+      recommendedMenu:[]
+    }
+  ];
+
   function loadData(){
     try{
       var raw = localStorage.getItem(STORAGE_KEY);
       if(raw) return JSON.parse(raw);
     }catch(e){}
     return {
-      shops:[
-        {
-          id:"sample-1",
-          name:"喫茶 モデル軒",
-          isSample:true,
-          address:"香川県高松市",
-          area:"高松市",
-          recommendedMenu:["ナポリタン","クリームソーダ","ブレンドコーヒー"],
-          createdAt:Date.now(),
-          visits:[
-            {
-              id:"sample-visit-1",
-              date:new Date().toISOString().slice(0,10),
-              companions:"（サンプル）ひとりで",
-              mood:MOODS[1],
-              memo:"これはサンプルの記録です。実際に高松の純喫茶を訪れたら、この店は削除して、あなた自身のお店を登録してください。",
-              photo:null
-            }
-          ]
-        }
-      ]
+      shops: TAKAMATSU_DIRECTORY.map(function(d, i){
+        return {
+          id: "seed-" + i,
+          name: d.name,
+          address: d.address,
+          area: "高松市",
+          description: d.description,
+          recommendedMenu: d.recommendedMenu.slice(),
+          createdAt: Date.now() - i,
+          visits: []
+        };
+      })
     };
   }
 
@@ -534,6 +588,8 @@
       renderList();
     } else if(parts[0] === "add-shop"){
       renderAddShop(null);
+    } else if(parts[0] === "directory"){
+      renderDirectory();
     } else if(parts[0] === "edit-shop" && parts[1]){
       renderAddShop(parts[1]);
     } else if(parts[0] === "shop" && parts[1] && parts[2] === "add-visit"){
@@ -566,10 +622,13 @@
     var html = '<div class="header-bar">' +
       '<button class="back-btn" id="toCover">表紙</button>' +
       '<h1>高松 純喫茶リスト</h1>' +
-    '</div><main>';
+    '</div><main>' +
+    '<div style="padding:12px 16px 0;">' +
+      '<button class="btn-secondary" id="openDirectoryBtn" style="width:100%;">🔍 高松の純喫茶リストから選んで追加</button>' +
+    '</div>';
 
     if(shops.length === 0){
-      html += '<div class="empty-state">まだお店が登録されていません。<br>右下の＋から最初の一軒を登録しましょう。</div>';
+      html += '<div class="empty-state">まだお店が登録されていません。<br>右下の＋から最初の一軒を登録するか、上のボタンから候補を選びましょう。</div>';
     } else {
       shops.forEach(function(s){
         var visitCount = s.visits.length;
@@ -589,8 +648,56 @@
 
     document.getElementById("toCover").onclick = function(){ location.hash = "#/"; };
     document.getElementById("addShopFab").onclick = function(){ location.hash = "#/add-shop"; };
+    document.getElementById("openDirectoryBtn").onclick = function(){ location.hash = "#/directory"; };
     Array.prototype.forEach.call(document.querySelectorAll(".shop-card"), function(el){
       el.onclick = function(){ location.hash = "#/shop/"+el.getAttribute("data-id"); };
+    });
+  }
+
+  function renderDirectory(){
+    var html = '<div class="header-bar">' +
+      '<button class="back-btn" id="backBtn">戻る</button>' +
+      '<h1>高松の純喫茶 候補リスト</h1>' +
+    '</div><main><div class="section">' +
+      '<div style="color:var(--brown); font-size:.85rem; margin-bottom:12px; line-height:1.6;">Web検索で見つけた高松市内の実在の純喫茶・レトロ喫茶店です。気になるお店を追加してから、訪れた記録をつけましょう。</div>';
+
+    TAKAMATSU_DIRECTORY.forEach(function(d){
+      var already = data.shops.some(function(s){ return s.name === d.name; });
+      html += '<div class="shop-card" style="cursor:default; align-items:flex-start;">' +
+        '<div class="shop-icon">🍮</div>' +
+        '<div class="shop-card-info">' +
+          '<div class="name">'+esc(d.name)+'</div>' +
+          '<div class="area">'+esc(d.address)+'</div>' +
+          (d.description ? '<div style="font-size:.78rem; color:var(--brown-light); margin-top:4px; line-height:1.5;">'+esc(d.description)+'</div>' : '') +
+        '</div>' +
+        (already
+          ? '<span style="font-size:.78rem; color:var(--green-deep); white-space:nowrap; padding-top:4px;">登録済み</span>'
+          : '<button class="btn-secondary add-directory-btn" data-name="'+esc(d.name)+'" style="white-space:nowrap;">追加</button>') +
+      '</div>';
+    });
+
+    html += '</div></main>';
+    app.innerHTML = html;
+
+    document.getElementById("backBtn").onclick = function(){ location.hash = "#/list"; };
+    Array.prototype.forEach.call(document.querySelectorAll(".add-directory-btn"), function(btn){
+      btn.onclick = function(){
+        var name = btn.getAttribute("data-name");
+        var d = TAKAMATSU_DIRECTORY.filter(function(x){ return x.name === name; })[0];
+        if(!d) return;
+        data.shops.push({
+          id: uid(),
+          name: d.name,
+          address: d.address,
+          area: "高松市",
+          description: d.description,
+          recommendedMenu: d.recommendedMenu.slice(),
+          createdAt: Date.now(),
+          visits: []
+        });
+        saveData();
+        renderDirectory();
+      };
     });
   }
 
@@ -608,6 +715,8 @@
       '<input type="text" id="fArea" value="'+(editing?esc(editing.area):'高松市')+'">' +
       '<label>住所（Googleマップの検索・道順に使用）</label>' +
       '<input type="text" id="fAddress" placeholder="例）香川県高松市○○町1-2-3" value="'+(editing?esc(editing.address):'')+'">' +
+      '<label>お店の特徴・メモ（任意）</label>' +
+      '<textarea id="fDescription" placeholder="創業年、店内の雰囲気、こだわりなど">'+(editing&&editing.description?esc(editing.description):'')+'</textarea>' +
       '<label>おすすめメニュー</label>' +
       '<div style="display:flex; gap:8px;">' +
         '<input type="text" id="fMenuInput" placeholder="例）ナポリタン">' +
@@ -651,6 +760,7 @@
       var name = document.getElementById("fName").value.trim();
       var address = document.getElementById("fAddress").value.trim();
       var area = document.getElementById("fArea").value.trim();
+      var description = document.getElementById("fDescription").value.trim();
       if(!name || !address){
         alert("店名と住所を入力してください。");
         return;
@@ -659,6 +769,7 @@
         editing.name = name;
         editing.address = address;
         editing.area = area;
+        editing.description = description;
         editing.recommendedMenu = menuItems;
         editing.isSample = false;
       } else {
@@ -667,6 +778,7 @@
           name: name,
           address: address,
           area: area,
+          description: description,
           recommendedMenu: menuItems,
           createdAt: Date.now(),
           visits: []
@@ -698,6 +810,7 @@
       '<button class="btn-secondary" id="editShopBtn">お店情報を編集</button>' +
       '<button class="btn-danger" id="delShopBtn">削除</button>' +
     '</div>' +
+    (shop.description ? '<div class="section"><h2>お店について</h2><div style="font-size:.92rem; line-height:1.7;">'+esc(shop.description)+'</div></div>' : '') +
     '<div class="section">' +
       '<h2>おすすめメニュー</h2>' +
       (shop.recommendedMenu.length
