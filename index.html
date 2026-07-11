@@ -893,7 +893,12 @@
   }
 
   function renderList(){
-    var shops = data.shops.slice().sort(function(a,b){ return (b.createdAt||0) - (a.createdAt||0); });
+    var dirOrder = {};
+    TAKAMATSU_DIRECTORY.forEach(function(d, i){ dirOrder[d.name] = i; });
+    function orderKey(s){
+      return (s.name in dirOrder) ? dirOrder[s.name] : 1000 + (s.createdAt || 0) / 1e13;
+    }
+    var shops = data.shops.slice().sort(function(a,b){ return orderKey(a) - orderKey(b); });
     var visitedTotal = shops.filter(function(s){ return s.visits.length > 0; }).length;
     var pct = shops.length ? Math.round(visitedTotal / shops.length * 100) : 0;
     var html = '<div class="header-bar">' +
