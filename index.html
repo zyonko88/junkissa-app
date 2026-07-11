@@ -250,6 +250,33 @@
     .fab{right:20px;}
   }
 
+  .music-toggle{
+    position:fixed;
+    left:calc(50% - 260px + 20px);
+    bottom:24px;
+    width:56px;height:56px;
+    border-radius:50%;
+    background:var(--brown-dark);
+    color:var(--cream);
+    border:2px solid var(--mustard);
+    font-size:1.5rem;
+    box-shadow:0 4px 10px rgba(0,0,0,0.3);
+    z-index:30;
+    transition:transform .15s;
+  }
+  .music-toggle.playing{
+    background:var(--mustard);
+    color:var(--brown-dark);
+    animation:musicPulse 1.4s ease-in-out infinite;
+  }
+  @keyframes musicPulse{
+    0%,100%{transform:scale(1);}
+    50%{transform:scale(1.08);}
+  }
+  @media (max-width:560px){
+    .music-toggle{left:20px;}
+  }
+
   /* ---- detail ---- */
   .detail-hero{
     background:var(--brown-dark);
@@ -396,6 +423,102 @@
 
   function mapsUrl(address){
     return "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(address);
+  }
+
+  // ---------- 昭和歌謡風オリジナルBGM (Web Audio API, 実在の楽曲は使用しない) ----------
+  var NOTE_FREQ = {
+    A3:220.00, C4:261.63, D4:293.66, F4:349.23,
+    G4:392.00, A4:440.00, C5:523.25, D5:587.33
+  };
+  var MELODY = [
+    ["D4",0.4],["F4",0.4],["G4",0.4],["A4",0.4],
+    ["C5",0.8],["A4",0.4],["G4",0.4],
+    ["F4",0.8],["D4",0.4],["F4",0.4],
+    ["G4",1.2],
+    ["A4",0.4],["G4",0.4],["F4",0.4],["D4",0.4],
+    ["C4",1.6],
+    ["A3",0.8]
+  ];
+
+  var audioCtx = null;
+  var musicPlaying = false;
+  var musicTimer = null;
+  var musicBtn = null;
+
+  function ensureAudioCtx(){
+    if(!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioCtx;
+  }
+
+  function playNote(freq, startTime, dur, ctx){
+    var osc = ctx.createOscillator();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(freq, startTime);
+
+    var vibrato = ctx.createOscillator();
+    vibrato.frequency.value = 5.5;
+    var vibratoGain = ctx.createGain();
+    vibratoGain.gain.value = 6;
+    vibrato.connect(vibratoGain);
+    vibratoGain.connect(osc.frequency);
+
+    var gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, startTime);
+    gain.gain.linearRampToValueAtTime(0.16, startTime + 0.06);
+    gain.gain.linearRampToValueAtTime(0.11, startTime + dur * 0.6);
+    gain.gain.linearRampToValueAtTime(0.0001, startTime + dur);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(startTime);
+    vibrato.start(startTime);
+    osc.stop(startTime + dur + 0.05);
+    vibrato.stop(startTime + dur + 0.05);
+  }
+
+  function scheduleMelodyLoop(){
+    if(!musicPlaying) return;
+    var ctx = ensureAudioCtx();
+    var t = ctx.currentTime + 0.05;
+    var total = 0;
+    MELODY.forEach(function(n){
+      playNote(NOTE_FREQ[n[0]], t + total, n[1] * 0.92, ctx);
+      total += n[1];
+    });
+    musicTimer = setTimeout(scheduleMelodyLoop, total * 1000);
+  }
+
+  function updateMusicBtn(){
+    if(!musicBtn) return;
+    musicBtn.textContent = musicPlaying ? "⏸" : "🎵";
+    musicBtn.classList.toggle("playing", musicPlaying);
+    musicBtn.setAttribute("aria-label", musicPlaying ? "昭和歌謡を停止" : "昭和歌謡を流す");
+  }
+
+  function toggleMusic(){
+    var ctx = ensureAudioCtx();
+    if(musicPlaying){
+      musicPlaying = false;
+      if(musicTimer) clearTimeout(musicTimer);
+    } else {
+      musicPlaying = true;
+      if(ctx.state === "suspended") ctx.resume();
+      scheduleMelodyLoop();
+    }
+    updateMusicBtn();
+  }
+
+  function mountMusicButton(){
+    musicBtn = document.createElement("button");
+    musicBtn.className = "music-toggle";
+    musicBtn.type = "button";
+    musicBtn.textContent = "🎵";
+    musicBtn.setAttribute("aria-label", "昭和歌謡を流す");
+    musicBtn.onclick = toggleMusic;
+    document.body.appendChild(musicBtn);
   }
 
   // ---------- Rendering ----------
@@ -702,6 +825,7 @@
 
   window.addEventListener("hashchange", render);
   render();
+  mountMusicButton();
 })();
 </script>
 </body>
